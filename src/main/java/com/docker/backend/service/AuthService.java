@@ -48,6 +48,29 @@ public class AuthService {
                 .build();
     }
 
+    public AuthResponse registerAdmin(RegisterRequest request) {
+    if (userRepository.existsByEmail(request.getEmail())) {
+        throw new BadRequestException("El email ya está registrado");
+    }
+
+    User user = User.builder()
+            .name(request.getName())
+            .email(request.getEmail())
+            .password(passwordEncoder.encode(request.getPassword()))
+            .role(Role.ADMIN) // 👈 fuerza ADMIN
+            .build();
+
+    userRepository.save(user);
+    String token = jwtService.generateToken(user);
+
+    return AuthResponse.builder()
+            .token(token)
+            .email(user.getEmail())
+            .name(user.getName())
+            .role(user.getRole().name())
+            .build();
+}
+
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
